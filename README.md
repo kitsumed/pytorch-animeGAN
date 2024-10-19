@@ -34,10 +34,18 @@ pip install -r requirements_gpu.txt
 ```
 ### Inference
 **On your local machine**
-> --src can be a directory or image file
+> [!TIP]
+> `--src` and `--out` arguments can be a directory, a image file, or a video
 
+*Directory example*:
 ```
 python3 inference.py --weight /your/path/to/weight.pth --src /your/path/to/image_dir --out /path/to/output_dir
+```
+*Video example*:
+> [!WARNING]
+> Be careful when choosing `--batch-size` with video inferences, it might lead to CUDA memory error if the resolution of the video is too large
+```
+python3 inference.py --weight /your/path/to/weight.pth --src test_vid_3.mp4 --out test_vid_3_anime.mp4 --batch-size 4
 ```
 
 **From python code**
@@ -55,10 +63,12 @@ url = 'https://github.com/ptran1203/pytorch-animeGAN/blob/master/example/result/
 
 predictor.transform_file(url, "anime.jpg")
 ```
-
+> [!NOTE]
+> In this example, a url is given to `predictor.transform_file`, you can also give a local file path.
 ## Pretrained weight
 Some weight where made available by ptran1203 [here](https://github.com/ptran1203/pytorch-animeGAN/releases).
 
+## Training your own weight
 ### 1. Prepare dataset
 
 #### 1.1 To download dataset from the paper, run below command
@@ -111,30 +121,4 @@ python3 train.py --anime_image_dir dataset/Hayao \
                 --wgra 3.0\                  # Gram loss weight
                 --wcol 30.0\                 # Color loss weight
                 --use_sn\                    # If set, use spectral normalization, default is False
-```
-
-### 3. Transform images
-
-To convert images in a folder or single image, run `inference.py`, for example:
-
->
-> --src and --out can be a directory or a file
-
-```bash
-python3 inference.py --weight path/to/Generator.pt \
-                     --src dataset/test/HR_photo \
-                     --out inference_images
-```
-
-### 4. Transform video
-
-To convert a video to anime version:
-
-> Be careful when choosing --batch-size, it might lead to CUDA memory error if the resolution of the video is too large
-
-```bash
-python3 inference.py --weight /your/path/to/weight.pth \
-                        --src test_vid_3.mp4 \
-                        --out test_vid_3_anime.mp4 \
-                        --batch-size 4
 ```
