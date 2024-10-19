@@ -1,6 +1,7 @@
 import os
 import time
 import shutil
+import argparse
 
 import torch
 import cv2
@@ -262,12 +263,7 @@ class Predictor:
         if output_dir:
             os.makedirs(output_dir, exist_ok=True)
 
-        is_gg_drive = '/drive/' in output_path
         temp_file = ''
-
-        if is_gg_drive:
-            # Writing directly into google drive can be inefficient
-            temp_file = f'tmp_anime.{output_path.split(".")[-1]}'
 
         def transform_and_write(frames, count, writer):
             anime_images = self.transform(frames)
@@ -341,25 +337,20 @@ class Predictor:
 
         return images
 
-
-def parse_args():
-    import argparse
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--weight', type=str, default=None, help=f'Model weight, the path of the model.')
-    parser.add_argument('--src', type=str, help='Source, can be directory contains images, image file or video file.')
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description="This is the python script to run AnimeGan intefences.")
+    parser.add_argument('--weight', type=str, required=True, help=f'Model weight, the path of the model.')
+    parser.add_argument('--src', type=str, required=True, help='Source, can be directory contains images, image file or video file.')
     parser.add_argument('--device', type=str, default='cuda', help='Device, cuda or cpu')
     parser.add_argument('--imgsz', type=int, default=None, help='Resize image to specified size if provided')
     parser.add_argument('--out', type=str, default='inference_images', help='Output, can be directory or file')
-    parser.add_argument('--retain-color', action='store_true', help='If provided the generated image will retain original color of input image')
+    parser.add_argument('--retain-color', action='store_true', help='If provided, the generated image will retain original color of input image')
     # Video params
-    parser.add_argument('--batch-size', type=int, default=4, help='Batch size when inference video')
-    parser.add_argument('--start', type=int, default=0, help='Start time of video (second)')
-    parser.add_argument('--end', type=int, default=0, help='End time of video (second), 0 if not set')
-
-    return parser.parse_args()
-
-if __name__ == '__main__':
-    args = parse_args()
+    parserVideo = parser.add_argument_group("Video Params")
+    parserVideo.add_argument('--batch-size', type=int, default=4, help='Batch size when inference video')
+    parserVideo.add_argument('--start', type=int, default=0, help='Start time of video (second)')
+    parserVideo.add_argument('--end', type=int, default=0, help='End time of video (second), 0 if not set')
+    args = parser.parse_args()
 
     predictor = Predictor(
         args.weight,
