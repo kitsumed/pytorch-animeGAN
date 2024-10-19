@@ -15,7 +15,7 @@ This fork use more recents requirements.
 This fork of PyTorch-AnimeGAN successfully worked on :
 
 * **OS** : `Windows 10/11`
-* **Python** : `3.10.11`
+* **Python** : `3.10`
 
 ## Quick start
 
