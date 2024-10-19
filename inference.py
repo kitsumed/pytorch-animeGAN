@@ -9,7 +9,7 @@ import numpy as np
 from models.anime_gan import GeneratorV1
 from models.anime_gan_v2 import GeneratorV2
 from models.anime_gan_v3 import GeneratorV3
-from utils.common import load_checkpoint, RELEASED_WEIGHTS
+from utils.common import load_checkpoint
 from utils.image_processing import resize_image, normalize_input, denormalize_input
 from utils import read_image, is_image_file, is_video_file
 from tqdm import tqdm
@@ -55,19 +55,14 @@ def auto_load_weight(weight, version=None, map_location=None):
         # Try to get class by name of weight file    
         # For convenenice, weight should start with classname
         # e.g: Generatorv2_{anything}.pt
-        if weight_name in RELEASED_WEIGHTS:
-            version = RELEASED_WEIGHTS[weight_name][0]
-            return auto_load_weight(weight, version=version, map_location=map_location)
-
-        elif weight_name.startswith("generatorv2"):
+        if weight_name.startswith("generatorv2"):
             cls = GeneratorV2
         elif weight_name.startswith("generatorv3"):
             cls = GeneratorV3
         elif weight_name.startswith("generator"):
             cls = GeneratorV1
         else:
-            raise ValueError((f"Can not get Model from {weight_name}, "
-                               "you might need to explicitly specify version"))
+            raise ValueError((f"Can not get Model from {weight_name}, you might need to explicitly specify version. Model name should start with 'generatorvX'."))
     model = cls()
     load_checkpoint(model, weight, strip_optimizer=True, map_location=map_location)
     model.eval()
@@ -350,20 +345,12 @@ class Predictor:
 def parse_args():
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        '--weight',
-        type=str,
-        default="hayao:v2",
-        help=f'Model weight, can be path or pretrained {tuple(RELEASED_WEIGHTS.keys())}'
-    )
+    parser.add_argument('--weight', type=str, default=None, help=f'Model weight, the path of the model.')
     parser.add_argument('--src', type=str, help='Source, can be directory contains images, image file or video file.')
     parser.add_argument('--device', type=str, default='cuda', help='Device, cuda or cpu')
     parser.add_argument('--imgsz', type=int, default=None, help='Resize image to specified size if provided')
     parser.add_argument('--out', type=str, default='inference_images', help='Output, can be directory or file')
-    parser.add_argument(
-        '--retain-color',
-        action='store_true',
-        help='If provided the generated image will retain original color of input image')
+    parser.add_argument('--retain-color', action='store_true', help='If provided the generated image will retain original color of input image')
     # Video params
     parser.add_argument('--batch-size', type=int, default=4, help='Batch size when inference video')
     parser.add_argument('--start', type=int, default=0, help='Start time of video (second)')

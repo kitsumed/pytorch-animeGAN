@@ -1,0 +1,9 @@
+torch==2.5.0
+torchvision==0.20.0
+
+numpy==1.26.4
+# ipython==7.21.0
+opencv-python==4.10.0.84
+# moviepy==1.0.3
+color_transfer_py==0.0.5
+tqdm==4.66.5
