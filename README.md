@@ -15,7 +15,7 @@ This fork use more recents requirements.
 This fork of PyTorch-AnimeGAN successfully worked on :
 
 * **OS** : `Windows 10/11`
-* **Python** : `3.10`
+* **Python** : `3.10.11`
 
 ## Quick start
 
@@ -24,7 +24,7 @@ git clone https://github.com/kitsumed/pytorch-animeGAN
 cd pytorch-animeGAN
 
 # Create a environment (Optional) 
-py -3.10.11 -m venv venv
+py -3.10 -m venv venv
 # Go into the environment
 .\venv\Scripts\activate
 
