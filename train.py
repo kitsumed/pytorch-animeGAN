@@ -12,52 +12,58 @@ from utils.logger import get_logger
 
 
 def parse_args():
+    """
+    Parse the arguments used when running the inference script
+    """
     parser = argparse.ArgumentParser()
-    parser.add_argument('--real_image_dir', type=str, default='dataset/train_photo')
-    parser.add_argument('--anime_image_dir', type=str, default='dataset/Hayao')
-    parser.add_argument('--test_image_dir', type=str, default='dataset/test/HR_photo')
-    parser.add_argument('--model', type=str, default='v1', help="AnimeGAN version, can be {'v1', 'v2', 'v3'}")
-    parser.add_argument('--epochs', type=int, default=70)
-    parser.add_argument('--init_epochs', type=int, default=10)
-    parser.add_argument('--batch_size', type=int, default=8)
+    parser.add_argument('--real_image_dir', type=str, default='dataset_real/japan', help="A folder with your real pictures")
+    parser.add_argument('--anime_image_dir', type=str, default='dataset/anime', help="A folder with the wanted style images under the 'style' folder & edge-smooth version under 'smooth' folder")
+    parser.add_argument('--test_image_dir', type=str, default='dataset/test', help="A folder with images used for testing the model")
+    parser.add_argument('--model', type=str, default='v2', help="AnimeGAN version, can be {'v1', 'v2', 'v3'}")
+    parser.add_argument('--epochs', type=int, default=70, help="Number of training epochs")
+    parser.add_argument('--init_epochs', type=int, default=10, help="Number of training epochs only for the init G model")
+    parser.add_argument('--batch_size', type=int, default=8, help="The batch size used in training, 1 would update the model after processing one image, 2 after processing 2 images")
     parser.add_argument('--exp_dir', type=str, default='runs', help="Experiment directory")
     parser.add_argument('--gan_loss', type=str, default='lsgan', help='lsgan / hinge / bce')
-    parser.add_argument('--resume', action='store_true', help="Continue from current dir")
-    parser.add_argument('--resume_G_init', type=str, default='False')
-    parser.add_argument('--resume_G', type=str, default='False')
-    parser.add_argument('--resume_D', type=str, default='False')
+    parser.add_argument('--resume', action='store_true', help="Resume training from current directory. Need the same real_image_dir,anime_image_dir, and exp_dir")
+    parser.add_argument('--resume_G_init', type=str, default='False', help="Resume training using a specific init G model")
+    parser.add_argument('--resume_G', type=str, default='False', help="Resume training using a specific G model")
+    parser.add_argument('--resume_D', type=str, default='False', help="Resume training using a specific D model")
     parser.add_argument('--device', type=str, default='cuda')
-    parser.add_argument('--use_sn', action='store_true')
+    parser.add_argument('--use_sn', action='store_true', help="Use spectral normalization on D training")
     parser.add_argument('--cache', action='store_true', help="Turn on disk cache")
     parser.add_argument('--amp', action='store_true', help="Turn on Automatic Mixed Precision")
-    parser.add_argument('--save_interval', type=int, default=1)
+    parser.add_argument('--save_interval', type=int, default=1, help="Save model at every X epoch")
     parser.add_argument('--debug_samples', type=int, default=0)
-    parser.add_argument('--num_workers', type=int, default=2)
+    parser.add_argument('--num_workers', type=int, default=2, help="Number of worker threads for loading the data with the DataLoader")
     parser.add_argument('--imgsz', type=int, nargs="+", default=[256],
                         help="Image sizes, can provide multiple values, image size will increase after a proportion of epochs")
     parser.add_argument('--resize_method', type=str, default="crop",
-                        help="Resize image method if origin photo larger than imgsz")
-    # Loss stuff
-    parser.add_argument('--lr_g', type=float, default=2e-5)
-    parser.add_argument('--lr_d', type=float, default=4e-5)
-    parser.add_argument('--init_lr', type=float, default=1e-4)
-    parser.add_argument('--wadvg', type=float, default=300.0, help='Adversarial loss weight for G')
-    parser.add_argument('--wadvd', type=float, default=300.0, help='Adversarial loss weight for D')
-    parser.add_argument(
+                        help="Resize image method if origin photo larger than imgsz. Write 'resize' to resize, anything else to crop randomly.")
+    # Loss for Generators & Discriminators
+    parserLoss = parser.add_argument_group("Loss for Generators & Discriminators")
+    parserLoss.add_argument('--lr_g', type=float, default=2e-5, help="Linear lost for G weight")
+    parserLoss.add_argument('--lr_d', type=float, default=4e-5, help="Linear lost for D weight")
+    parserLoss.add_argument('--init_lr', type=float, default=1e-4, help="Linear lost for init G weight")
+    parserLoss.add_argument('--wadvg', type=float, default=300.0, help='Adversarial loss weight for G')
+    parserLoss.add_argument('--wadvd', type=float, default=300.0, help='Adversarial loss weight for D')
+    parserLoss.add_argument(
         '--gray_adv', action='store_true',
         help="If given, train adversarial with gray scale image instead of RGB image to reduce color effect of anime style")
     # Loss weight VGG19
-    parser.add_argument('--wcon', type=float, default=1.5, help='Content loss weight') #  1.5 for Hayao, 2.0 for Paprika, 1.2 for Shinkai
-    parser.add_argument('--wgra', type=float, default=5.0, help='Gram loss weight') # 2.5 for Hayao, 0.6 for Paprika, 2.0 for Shinkai
-    parser.add_argument('--wcol', type=float, default=30.0, help='Color loss weight') # 15. for Hayao, 50. for Paprika, 10. for Shinkai
-    parser.add_argument('--wtvar', type=float, default=1.0, help='Total variation loss') # 1. for Hayao, 0.1 for Paprika, 1. for Shinkai
-    parser.add_argument('--d_layers', type=int, default=2, help='Discriminator conv layers')
-    parser.add_argument('--d_noise', action='store_true')
+    parserLossVGG19 = parser.add_argument_group("VGG19 Loss weight")
+    parserLossVGG19.add_argument('--wcon', type=float, default=1.5, help='Content loss weight') #  1.5 for Hayao, 2.0 for Paprika, 1.2 for Shinkai
+    parserLossVGG19.add_argument('--wgra', type=float, default=5.0, help='Gram loss weight') # 2.5 for Hayao, 0.6 for Paprika, 2.0 for Shinkai
+    parserLossVGG19.add_argument('--wcol', type=float, default=30.0, help='Color loss weight') # 15. for Hayao, 50. for Paprika, 10. for Shinkai
+    parserLossVGG19.add_argument('--wtvar', type=float, default=1.0, help='Total variation loss') # 1. for Hayao, 0.1 for Paprika, 1. for Shinkai
+    parserLossVGG19.add_argument('--d_layers', type=int, default=2, help='Discriminator conv layers')
+    parserLossVGG19.add_argument('--d_noise', action='store_true')
 
     # DDP
-    parser.add_argument('--ddp', action='store_true')
-    parser.add_argument("--local-rank", default=0, type=int)
-    parser.add_argument("--world-size", default=2, type=int)
+    parserDDP = parser.add_argument_group("DDP")
+    parserDDP.add_argument('--ddp', action='store_true')
+    parserDDP.add_argument("--local-rank", default=0, type=int)
+    parserDDP.add_argument("--world-size", default=2, type=int)
 
     return parser.parse_args()
 

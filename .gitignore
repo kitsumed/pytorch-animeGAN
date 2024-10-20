@@ -1,5 +1,6 @@
  __pycache__/
 venv/
+.vscode/
 *.pyc
 *.zip
 dataset
@@ -12,3 +13,4 @@ inference_images/
 *.png
 *.pt
 *.pth
+*.log

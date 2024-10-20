@@ -337,20 +337,27 @@ class Predictor:
 
         return images
 
-if __name__ == '__main__':
+
+def parse_args():
+    """
+    Parse the arguments used when running the inference script
+    """
     parser = argparse.ArgumentParser(description="This is the python script to run AnimeGan intefences.")
     parser.add_argument('--weight', type=str, required=True, help=f'Model weight, the path of the model.')
-    parser.add_argument('--src', type=str, required=True, help='Source, can be directory contains images, image file or video file.')
+    parser.add_argument('--src', type=str, default='inference/input', help='Source, can be directory contains images, image file or video file.')
     parser.add_argument('--device', type=str, default='cuda', help='Device, cuda or cpu')
     parser.add_argument('--imgsz', type=int, default=None, help='Resize image to specified size if provided')
-    parser.add_argument('--out', type=str, default='inference_images', help='Output, can be directory or file')
+    parser.add_argument('--out', type=str, default='inference/output', help='Output, can be directory or file')
     parser.add_argument('--retain-color', action='store_true', help='If provided, the generated image will retain original color of input image')
     # Video params
     parserVideo = parser.add_argument_group("Video Params")
     parserVideo.add_argument('--batch-size', type=int, default=4, help='Batch size when inference video')
     parserVideo.add_argument('--start', type=int, default=0, help='Start time of video (second)')
     parserVideo.add_argument('--end', type=int, default=0, help='End time of video (second), 0 if not set')
-    args = parser.parse_args()
+    return parser.parse_args()
+
+if __name__ == '__main__':
+    args = parse_args()
 
     predictor = Predictor(
         args.weight,

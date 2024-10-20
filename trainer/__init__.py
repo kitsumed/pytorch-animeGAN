@@ -7,7 +7,7 @@ import cv2
 import torch.optim as optim
 import numpy as np
 from glob import glob
-from torch.cuda.amp import GradScaler, autocast
+from torch.amp import GradScaler, autocast
 from torch.nn.parallel.distributed import DistributedDataParallel
 from torch.utils.data import Dataset, DataLoader
 from tqdm import tqdm
@@ -72,9 +72,8 @@ class DDPTrainer:
             self.logger.info("Setting up DDP Done")
 
     def _init_amp(self, enabled=False):
-        # self.scaler = torch.cuda.amp.GradScaler(enabled=enabled, growth_interval=100)
-        self.scaler_g = GradScaler(enabled=enabled)
-        self.scaler_d = GradScaler(enabled=enabled)
+        self.scaler_g = GradScaler("cuda", enabled=enabled)
+        self.scaler_d = GradScaler("cuda", enabled=enabled)
         if self.cfg.ddp:
             self.G = DistributedDataParallel(
                 self.G, device_ids=[self.cfg.local_rank],
@@ -155,7 +154,7 @@ class Trainer(DDPTrainer):
 
                 self.optimizer_g.zero_grad()
 
-                with autocast(enabled=self.cfg.amp):
+                with autocast("cuda", enabled=self.cfg.amp):
                     fake_img = self.G(img)
                     loss = self.loss_fn.content_loss_vgg(img, fake_img)
 
@@ -188,7 +187,7 @@ class Trainer(DDPTrainer):
             # ---------------- TRAIN D ---------------- #
             self.optimizer_d.zero_grad()
 
-            with autocast(enabled=self.cfg.amp):
+            with autocast("cuda", enabled=self.cfg.amp):
                 fake_img = self.G(img)
                 # Add some Gaussian noise to images before feeding to D
                 if self.cfg.d_noise:
@@ -224,7 +223,7 @@ class Trainer(DDPTrainer):
             # ---------------- TRAIN G ---------------- #
             self.optimizer_g.zero_grad()
 
-            with autocast(enabled=self.cfg.amp):
+            with autocast("cuda", enabled=self.cfg.amp):
                 fake_img = self.G(img)
                 
                 if self.cfg.gray_adv:
@@ -396,7 +395,7 @@ class Trainer(DDPTrainer):
             image = preprocess_images(image)
             image = image.to(self.device)
             with torch.no_grad():
-                with autocast(enabled=self.cfg.amp):
+                with autocast("cuda", enabled=self.cfg.amp):
                     fake_img = self.G(image)
                     # fake_img = to_gray_scale(fake_img)
                 fake_img = fake_img.detach().cpu().numpy()

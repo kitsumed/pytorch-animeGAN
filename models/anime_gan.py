@@ -28,14 +28,14 @@ class GeneratorV1(nn.Module):
         )
 
         self.res_blocks = nn.Sequential(
-            InvertedResBlock(256, 256, bias=bias),
-            InvertedResBlock(256, 256, bias=bias),
-            InvertedResBlock(256, 256, bias=bias),
-            InvertedResBlock(256, 256, bias=bias),
-            InvertedResBlock(256, 256, bias=bias),
-            InvertedResBlock(256, 256, bias=bias),
-            InvertedResBlock(256, 256, bias=bias),
-            InvertedResBlock(256, 256, bias=bias),
+            InvertedResBlock(256, 256),
+            InvertedResBlock(256, 256),
+            InvertedResBlock(256, 256),
+            InvertedResBlock(256, 256),
+            InvertedResBlock(256, 256),
+            InvertedResBlock(256, 256),
+            InvertedResBlock(256, 256),
+            InvertedResBlock(256, 256),
         )
 
         self.decode_blocks = nn.Sequential(
